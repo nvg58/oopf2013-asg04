@@ -22,7 +22,14 @@ public class Board	{
   private int[] heights;
   private int[] widths;
   private int maxHeight;
-	// Here a few trivial methods are provided:
+
+  // for backup
+  private boolean[][] backupGrid;
+  private int[] backupHeights;
+  private int[] backupWidths;
+  private int backupMaxHeight;
+
+  // Here a few trivial methods are provided:
 	
 	/**
 	 Creates an empty board of the given width and height
@@ -44,6 +51,11 @@ public class Board	{
     heights = new int[width];
     widths  = new int[height];
     maxHeight = 0;
+
+    backupGrid = new boolean[width][height];
+    backupHeights = new int[width];
+    backupWidths = new int[height];
+    backupMaxHeight = maxHeight;
 	}
 	
 	
@@ -78,24 +90,22 @@ public class Board	{
 	 for debugging.
 	*/
 	public void sanityCheck() {
-    //lặp toàn bộ grid để xem các giá trị trong mảng widths và heights có đúng hay không, x
-    // xem maxHeight có đúng hay không. Ném ngoại lệ nếu bảng không nhất quán: ném new RuntimeException("description").
 		if (DEBUG) {
 			// CODE HERE
       for (int y = 0; y < getHeight(); ++y) {
         int temp = 0;
         for (int x = 0; x < getWidth(); ++x) {
-          System.out.println("x " + x + "y " + y);
+//          System.out.println("x " + x + "y " + y);
           if (grid[x][y]) {
             temp++;
-            System.out.println("temp: " + temp);
+//            System.out.println("temp: " + temp);
           }
         }
-        System.out.println("---------" + widths.length);
-        System.out.println(Arrays.toString(widths));
-        System.out.println(height);
+//        System.out.println("---------" + widths.length);
+//        System.out.println(Arrays.toString(widths));
+//        System.out.println(height);
         if (temp != widths[y]) {
-          System.out.println(this.toString());
+//          System.out.println(this.toString());
           throw new RuntimeException("wrong width at row: " + y + "\nexpected: " + temp + "\nactual: " + widths[y]);
         }
       }
@@ -106,8 +116,8 @@ public class Board	{
           --y;
         }
         if (y+1 != heights[x]) {
-          System.out.println(this.toString());
-          throw new RuntimeException("wrong width at column: " + x + "\nexpected: " + y+1 + "\nactual: " + heights[x]);
+//          System.out.println(this.toString());
+          throw new RuntimeException("wrong height at column: " + x + "\nexpected: " + y+1 + "\nactual: " + heights[x]);
         }
       }
 
@@ -136,11 +146,16 @@ public class Board	{
 		 // CODE HERE
     int res = 0;
     int pieceSkirt[] = piece.getSkirt();
-    for (int i  = 0; i < piece.getWidth(); ++x) {
-      int t = Math.max(0, heights[i+x] - pieceSkirt[i]);
+//    System.out.println(Arrays.toString(pieceSkirt));
+//    System.out.println(Arrays.toString(piece.getBody()));
+//    System.out.println(piece.getWidth());
+//    System.out.println(toString());
+    for (int i  = 0; i < piece.getWidth(); ++i) {
+      int t = Math.max(0, heights[x+i] - pieceSkirt[i]);
       if (t > res)
         res = t;
     }
+//    System.out.println(res);
     return res;
 	}
 	
@@ -205,16 +220,28 @@ public class Board	{
 		int result = PLACE_OK;
 		
 		// CODE HERE
+    committed = false;
+//    System.out.println(piece.toString());
+    // backup board to undo()
+    for (int i = 0; i < getWidth(); i++) {
+      System.arraycopy(grid[i], 0, backupGrid[i], 0, grid[i].length);
+    }
+    System.arraycopy(heights, 0, backupHeights, 0, heights.length);
+    System.arraycopy(widths, 0, backupWidths, 0, widths.length);
+    backupMaxHeight = getMaxHeight();
+//    System.out.println(backupMaxHeight + "----");
+
     if (piece.getWidth()+x>width || piece.getHeight()+y>height || x<0 || y<0)
       return PLACE_OUT_BOUNDS;
     TPoint[] pieceBody = piece.getBody();
-    System.out.println(piece.toString());
+//    System.out.println(piece.toString());
+//    System.out.println(pieceBody.length);
     for (int i = 0; i < pieceBody.length; ++i) {
       int px = pieceBody[i].x+x;
       int py = pieceBody[i].y+y;
-      System.out.println(i);
-      System.out.println(px + " " + py);
-      System.out.println(pieceBody[i].toString());
+//      System.out.print(i + " - ");
+//      System.out.println(px + " " + py);
+//      System.out.println(pieceBody[i].toString());
       if (getGrid(px, py))
         return PLACE_BAD;
       grid[px][py] = true;
@@ -223,14 +250,15 @@ public class Board	{
       if (maxHeight < heights[px])
         maxHeight = heights[px];
       widths[py]++;
-      System.out.println("width " + py + " = " + widths[py]);
-      System.out.println("height " + px + " = " + heights[px]);
+//      System.out.println("width " + py + " = " + widths[py]);
+//      System.out.println("height " + px + " = " + heights[px]);
       if (widths[py] == width)
-        return PLACE_ROW_FILLED;
+        result = PLACE_ROW_FILLED;
     }
     if (result != PLACE_OK)
       sanityCheck();
-    commit();
+
+//    System.out.println(backupMaxHeight + "//////");
 		return result;
 	}
 	
@@ -241,8 +269,57 @@ public class Board	{
 	*/
 	public int clearRows() {
 		int rowsCleared = 0;
-		// YOUR CODE HERE
+		// CODE HERE
+
+    // backup board to undo()
+    for (int i = 0; i < getWidth(); i++) {
+      System.arraycopy(grid[i], 0, backupGrid[i], 0, grid[i].length);
+    }
+    System.arraycopy(heights, 0, backupHeights, 0, heights.length);
+    System.arraycopy(widths, 0, backupWidths, 0, widths.length);
+    backupMaxHeight = getMaxHeight();
+
+//    System.out.println(getMaxHeight());
+    for (int y = 0; y < getMaxHeight(); ++y) {
+//      System.out.println("row " + y + " = " + getRowWidth(y));
+      if (getRowWidth(y) == width) {
+//        System.out.println("aaa" + getRowWidth(y));
+        rowsCleared++;
+        for (int yy = y+1; yy <= getMaxHeight(); ++yy) {
+//          System.out.println("aaaaa" + widths[yy]);
+          widths[yy-1] = widths[yy];
+          for (int x = 0; x < width; ++x) {
+            grid[x][yy-1] = grid[x][yy];
+          }
+        }
+        for (int x = 0; x < getWidth(); ++x) {
+          grid[x][maxHeight-1] = false;
+        }
+        widths[maxHeight-1] = 0;
+//        System.out.println(y+ "=>>>>>>    \n" + this.toString());
+        --y;
+      }
+    }
+//    System.out.println(this.toString());
+
+    for (int x = 0; x < getWidth(); ++x) {
+      int y = getHeight()-1;
+      while (y >= 0 && !grid[x][y]) {
+        --y;
+      }
+      heights[x] = y + 1;
+    }
+//    System.out.println(Arrays.toString(heights));
+    maxHeight = 0;
+    for (int i = 0; i < heights.length; ++i) {
+      if (maxHeight < heights[i]) {
+        maxHeight = heights[i];
+      }
+    }
+//    System.out.println(Arrays.toString(heights));
+
 		sanityCheck();
+    committed = false;
 		return rowsCleared;
 	}
 
@@ -257,6 +334,24 @@ public class Board	{
 	*/
 	public void undo() {
 		// YOUR CODE HERE
+    if (!committed) {
+      committed = true;
+      boolean[][] tmpGrid = grid;
+      grid = backupGrid;
+      backupGrid = tmpGrid;
+
+      int[] h = heights;
+      heights = backupHeights;
+      backupHeights = h;
+
+      int[] w = widths;
+      widths = backupWidths;
+      backupWidths = w;
+
+      int mH = maxHeight;
+      maxHeight = backupMaxHeight;
+      backupMaxHeight = mH;
+    }
     sanityCheck();
 	}
 	
@@ -281,7 +376,7 @@ public class Board	{
 		for (int y = height-1; y>=0; y--) {
 			buff.append('|');
 			for (int x=0; x<width; x++) {
-				if (getGrid(x,y)) buff.append('0');
+				if (getGrid(x,y)) buff.append('*');
 				else buff.append(' ');
 			}
 			buff.append("|\n");

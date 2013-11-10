@@ -41,11 +41,12 @@ public class Piece {
     for (int i = 0; i < points.length; ++i) {
       body[i] = new TPoint(points[i]);
     }
+    // Sort body array
     for (int i = 0; i < body.length-1; ++i) {
       for (int j = i+1; j < body.length; ++j) {
-        if (body[i].x < body[j].x ||
+        if (body[i].x > body[j].x ||
             body[i].x == body[j].x &&
-                body[i].y < body[j].y) {
+                body[i].y > body[j].y) {
           TPoint t = body[i];
           body[i] = body[j];
           body[j] = t;
@@ -191,18 +192,21 @@ public class Piece {
     if (!(obj instanceof Piece)) return false;
     Piece other = (Piece)obj;
 
+    if (other.body.length != body.length)
+      return false;
+
     // CODE HERE
-    TPoint[] thisBody  = this.getBody();
-    TPoint[] otherBody = other.getBody();
-
-    if (Arrays.equals(thisBody, otherBody) &&
-        this.getHeight() == other.getHeight() &&
-        this.getWidth() == other.getWidth()) {
-      return true;
-    }
-    return false;
+//    TPoint[] thisBody  = this.getBody();
+//    TPoint[] otherBody = other.getBody();
+//
+//    if (Arrays.equals(thisBody, otherBody) &&
+//        this.getHeight() == other.getHeight() &&
+//        this.getWidth() == other.getWidth()) {
+//      return true;
+//    }
+//    return false;
+    return Arrays.deepEquals(this.body, other.body);
   }
-
 
   // String constants for the standard 7 tetris pieces
   public static final String STICK_STR	= "0 0	0 1	 0 2  0 3";
@@ -277,10 +281,14 @@ public class Piece {
     // CODE HERE
     Piece temp = root;
     do {
+      if (temp.computeNextRotation().equals(root)) {
+        temp.next = root;
+        break;
+      }
       Piece nextPiece = temp.computeNextRotation();
       temp.next = nextPiece;
       temp = nextPiece;
-    } while (!temp.equals(root));
+    } while (true);
     return root;
   }
 
