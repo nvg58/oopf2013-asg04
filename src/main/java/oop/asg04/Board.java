@@ -1,5 +1,8 @@
 // Board.java
 package oop.asg04;
+
+import java.util.Arrays;
+
 /**
  CS108 Tetris Board.
  Represents a Tetris board -- essentially a 2-d grid
@@ -15,8 +18,10 @@ public class Board	{
 	private boolean[][] grid;
 	private boolean DEBUG = true;
 	boolean committed;
-	
-	
+
+  private int[] heights;
+  private int[] widths;
+  private int maxHeight;
 	// Here a few trivial methods are provided:
 	
 	/**
@@ -30,6 +35,15 @@ public class Board	{
 		committed = true;
 		
 		// CODE HERE
+    for (int i = 0; i < width; ++i) {
+      for (int j = 0; j < height; ++j) {
+        grid[i][j] = false;
+      }
+    }
+
+    heights = new int[width];
+    widths  = new int[height];
+    maxHeight = 0;
 	}
 	
 	
@@ -54,7 +68,8 @@ public class Board	{
 	 For an empty board this is 0.
 	*/
 	public int getMaxHeight() {	 
-		return 0; // YOUR CODE HERE
+		// CODE HERE
+    return maxHeight;
 	}
 	
 	
@@ -63,8 +78,48 @@ public class Board	{
 	 for debugging.
 	*/
 	public void sanityCheck() {
+    //lặp toàn bộ grid để xem các giá trị trong mảng widths và heights có đúng hay không, x
+    // xem maxHeight có đúng hay không. Ném ngoại lệ nếu bảng không nhất quán: ném new RuntimeException("description").
 		if (DEBUG) {
-			// YOUR CODE HERE
+			// CODE HERE
+      for (int y = 0; y < getHeight(); ++y) {
+        int temp = 0;
+        for (int x = 0; x < getWidth(); ++x) {
+          System.out.println("x " + x + "y " + y);
+          if (grid[x][y]) {
+            temp++;
+            System.out.println("temp: " + temp);
+          }
+        }
+        System.out.println("---------" + widths.length);
+        System.out.println(Arrays.toString(widths));
+        System.out.println(height);
+        if (temp != widths[y]) {
+          System.out.println(this.toString());
+          throw new RuntimeException("wrong width at row: " + y + "\nexpected: " + temp + "\nactual: " + widths[y]);
+        }
+      }
+
+      for (int x = 0; x < getWidth(); ++x) {
+        int y = getHeight()-1;
+        while (y >= 0 && !grid[x][y]) {
+          --y;
+        }
+        if (y+1 != heights[x]) {
+          System.out.println(this.toString());
+          throw new RuntimeException("wrong width at column: " + x + "\nexpected: " + y+1 + "\nactual: " + heights[x]);
+        }
+      }
+
+      int tempMaxHeight = 0;
+      for (int i = 0; i < heights.length; ++i) {
+        if (tempMaxHeight < heights[i]) {
+          tempMaxHeight = heights[i];
+        }
+      }
+      if (tempMaxHeight != getMaxHeight()) {
+        throw new RuntimeException("wrong maxHeight\n expected " + tempMaxHeight + "\nactual: " + getMaxHeight());
+      }
 		}
 	}
 	
@@ -78,7 +133,15 @@ public class Board	{
 	 to compute this fast -- O(skirt length).
 	*/
 	public int dropHeight(Piece piece, int x) {
-		return 0; // YOUR CODE HERE
+		 // CODE HERE
+    int res = 0;
+    int pieceSkirt[] = piece.getSkirt();
+    for (int i  = 0; i < piece.getWidth(); ++x) {
+      int t = Math.max(0, heights[i+x] - pieceSkirt[i]);
+      if (t > res)
+        res = t;
+    }
+    return res;
 	}
 	
 	
@@ -88,7 +151,8 @@ public class Board	{
 	 The height is 0 if the column contains no blocks.
 	*/
 	public int getColumnHeight(int x) {
-		return 0; // YOUR CODE HERE
+		// CODE HERE
+    return heights[x];
 	}
 	
 	
@@ -97,7 +161,8 @@ public class Board	{
 	 the given row.
 	*/
 	public int getRowWidth(int y) {
-		 return 0; // YOUR CODE HERE
+		// CODE HERE
+    return widths[y];
 	}
 	
 	
@@ -107,7 +172,10 @@ public class Board	{
 	 always return true.
 	*/
 	public boolean getGrid(int x, int y) {
-		return false; // YOUR CODE HERE
+    // CODE HERE
+    if (x > width || y > height)
+      return true;
+		return grid[x][y];
 	}
 	
 	
@@ -133,11 +201,36 @@ public class Board	{
 	public int place(Piece piece, int x, int y) {
 		// flag !committed problem
 		if (!committed) throw new RuntimeException("place commit problem");
-			
+
 		int result = PLACE_OK;
 		
-		// YOUR CODE HERE
-		
+		// CODE HERE
+    if (piece.getWidth()+x>width || piece.getHeight()+y>height || x<0 || y<0)
+      return PLACE_OUT_BOUNDS;
+    TPoint[] pieceBody = piece.getBody();
+    System.out.println(piece.toString());
+    for (int i = 0; i < pieceBody.length; ++i) {
+      int px = pieceBody[i].x+x;
+      int py = pieceBody[i].y+y;
+      System.out.println(i);
+      System.out.println(px + " " + py);
+      System.out.println(pieceBody[i].toString());
+      if (getGrid(px, py))
+        return PLACE_BAD;
+      grid[px][py] = true;
+      if(py+1>heights[px])
+        heights[px] = py+1;
+      if (maxHeight < heights[px])
+        maxHeight = heights[px];
+      widths[py]++;
+      System.out.println("width " + py + " = " + widths[py]);
+      System.out.println("height " + px + " = " + heights[px]);
+      if (widths[py] == width)
+        return PLACE_ROW_FILLED;
+    }
+    if (result != PLACE_OK)
+      sanityCheck();
+    commit();
 		return result;
 	}
 	
@@ -164,6 +257,7 @@ public class Board	{
 	*/
 	public void undo() {
 		// YOUR CODE HERE
+    sanityCheck();
 	}
 	
 	
@@ -187,7 +281,7 @@ public class Board	{
 		for (int y = height-1; y>=0; y--) {
 			buff.append('|');
 			for (int x=0; x<width; x++) {
-				if (getGrid(x,y)) buff.append('+');
+				if (getGrid(x,y)) buff.append('0');
 				else buff.append(' ');
 			}
 			buff.append("|\n");
