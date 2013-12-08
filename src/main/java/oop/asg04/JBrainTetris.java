@@ -15,7 +15,7 @@ public class JBrainTetris extends JTetris {
     protected JCheckBox brainMode;
     protected JSlider adversary;
     private DefaultBrain dfBrain = new DefaultBrain();;
-    private int crCount = -1;
+    private int crCount = 0;
     private Brain.Move crMove = new Brain.Move();
     protected JPanel little;
     protected JLabel advStt;
@@ -29,27 +29,23 @@ public class JBrainTetris extends JTetris {
 //        System.out.println(verb);
         if (verb == DOWN && brainMode.isSelected()) {
             if (crCount != count) {
-                System.out.println(count + " <--- count  " + crCount + " -");
                 board.undo();
-                crMove = dfBrain.bestMove(board, currentPiece, HEIGHT, null);
+                crMove = dfBrain.bestMove(board, currentPiece, board.getHeight()-TOP_SPACE, crMove);
                 crCount = count;
             }
-            if (crMove == null || currentPiece == null || crMove.piece == null) {
-                stopGame();
-                return;
-            }
-            if (currentX < crMove.x) {
-                super.tick(RIGHT);
-            } else if (currentX > crMove.x) {
-                super.tick(LEFT);
-            }
+            if (crMove != null) {
+                if (currentX < crMove.x) {
+                    super.tick(RIGHT);
+                } else if (currentX > crMove.x) {
+                    super.tick(LEFT);
+                }
 
-            while (currentPiece != crMove.piece) {
-                super.tick(ROTATE);
+                if (currentPiece != crMove.piece) {
+                    super.tick(ROTATE);
+                }
             }
         }
         super.tick(verb);
-//        System.out.println("verb");
     }
 
     @Override
@@ -75,7 +71,6 @@ public class JBrainTetris extends JTetris {
     @Override
     public Piece pickNextPiece() {
         double randNum = new Random().nextDouble()*98+1;
-//        System.out.println(randNum + "\t" +adversary.getValue());
         if (randNum >= adversary.getValue()) {
             advStt.setText("ok");
             return super.pickNextPiece();
@@ -86,7 +81,7 @@ public class JBrainTetris extends JTetris {
 
             int res = 0;
             for(int i = 0; i < pieces.length; ++i) {
-                a = dfBrain.bestMove(board, pieces[i], HEIGHT, null);
+                a = dfBrain.bestMove(board, pieces[i], board.getHeight()-TOP_SPACE, null);
                 if (a == null)
                     return pieces[i];
                 if (i == 0)

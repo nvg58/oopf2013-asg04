@@ -270,14 +270,15 @@ public class Board {
   public int clearRows() {
     int rowsCleared = 0;
     // CODE HERE
-
+   if (committed) {
     // backup board to undo()
-    for (int i = 0; i < getWidth(); i++) {
-      System.arraycopy(grid[i], 0, backupGrid[i], 0, grid[i].length);
-    }
-    System.arraycopy(heights, 0, backupHeights, 0, heights.length);
-    System.arraycopy(widths, 0, backupWidths, 0, widths.length);
-    backupMaxHeight = getMaxHeight();
+        for (int i = 0; i < getWidth(); i++) {
+          System.arraycopy(grid[i], 0, backupGrid[i], 0, grid[i].length);
+        }
+        System.arraycopy(heights, 0, backupHeights, 0, heights.length);
+        System.arraycopy(widths, 0, backupWidths, 0, widths.length);
+        backupMaxHeight = getMaxHeight();
+   }
 
 //    System.out.println(getMaxHeight());
     for (int y = 0; y < getMaxHeight(); ++y) {
