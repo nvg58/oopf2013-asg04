@@ -17,3 +17,9 @@ proj.ios/ua-x.xcodeproj/project.xcworkspace/xcuserdata/*
 proj.win32/ua-x.sdf
 proj.win32/ua-x.v11.suo
 proj.win32/ua-x.opensdf
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
